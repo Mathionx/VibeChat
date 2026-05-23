@@ -432,20 +432,10 @@ async function sendMessage() {
 }
 
 function loadMessages() {
-  if (messagesSubscription) messagesSubscription.unsubscribe();
+  if (messagesSubscription) clearInterval(messagesSubscription);
   if (!partnerId) return;
-  messagesArea.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading messages...</div>';
-  const subscription = supabase
-    .channel('messages')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-      const msg = payload.new;
-      if ((msg.from_id === myId && msg.to_id === partnerId) || (msg.from_id === partnerId && msg.to_id === myId)) {
-        appendMessage(msg);
-      }
-    })
-    .subscribe();
-  messagesSubscription = subscription;
-  fetchMessages();
+  fetchMessages(); // initial load
+  messagesSubscription = setInterval(fetchMessages, 2000);
 }
 
 async function fetchMessages() {
