@@ -159,7 +159,7 @@ async function loadPartnerDetails() {
     partnerRealName = data.name || partnerId;
     if (data.photo_url) partnerAvatarHeader.src = data.photo_url;
     else partnerAvatarHeader.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle fill='%23ccc' cx='50' cy='50' r='50'/%3E%3Ctext fill='white' x='50' y='67' text-anchor='middle' font-size='50'%3E?%3C/text%3E%3C/svg%3E";
-    // Show either the saved partner name or their real name
+    
     if (partnerName && partnerName.trim() !== "") {
       chatPartnerNameSpan.textContent = partnerName;
     } else {
@@ -188,7 +188,7 @@ profileNameInput.addEventListener("change", async () => {
     localStorage.setItem("myName", myName);
     await supabase.from('users').update({ name: myName }).eq('user_id', myId);
     showMessage("Name saved");
-    if (partnerId) await loadPartnerDetails(); // refresh header for partner
+    if (partnerId) await loadPartnerDetails();
   }
 });
 
@@ -232,7 +232,7 @@ changePhotoBtn.addEventListener("click", () => {
     profileAvatarImg.src = publicUrl;
     uploadSpinner.classList.add("hidden");
     showMessage("Photo updated");
-    if (partnerId) await loadPartnerDetails(); // refresh partner's view of you
+    if (partnerId) await loadPartnerDetails();
   };
   input.click();
 });
@@ -254,7 +254,7 @@ partnerAvatarHeader.addEventListener("click", () => {
 });
 closePreviewBtn.addEventListener("click", () => imagePreviewModal.classList.add("hidden"));
 
-// ========== PIN LOGIC (FIXED) ==========
+// ========== PIN LOGIC ==========
 function updatePinUI() {
   const pinSettings = document.getElementById("pinSettingsArea");
   if (pinEnabled) {
@@ -415,28 +415,50 @@ autoThemeToggle.addEventListener("change", (e) => {
   loadThemeAndWallpaper();
 });
 
-// ========== CHAT MESSAGES ==========
+// ========== CHAT MESSAGES (FIXED PIPELINE) ==========
 async function sendMessage() {
   if (!partnerId) { showMessage("Set partner ID first", true); return; }
   const text = messageInput.value.trim();
   if (!text) return;
-  await supabase.from('messages').insert([{ from_id: myId, to_id: partnerId, text, created_at: new Date() }]);
+
+  const temporaryMessage = {
+    from_id: myId,
+    to_id: partnerId,
+    text: text,
+    created_at: new Date().toISOString()
+  };
+
+  // 1. Instantly append your own message locally
+  appendMessageToDOM(temporaryMessage, null);
+  
+  // Clear layout field
   messageInput.value = "";
+
+  // 2. Transmit to data storage backend
+  const { error } = await supabase.from('messages').insert([temporaryMessage]);
+  if (error) {
+    console.error("Message delivery failed:", error);
+  }
 }
 
 function loadMessages() {
   if (messagesSubscription) messagesSubscription.unsubscribe();
   if (!partnerId) return;
+  
   messagesArea.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading messages...</div>';
+  
   const subscription = supabase
     .channel('messages')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
       const msg = payload.new;
-      if ((msg.from_id === myId && msg.to_id === partnerId) || (msg.from_id === partnerId && msg.to_id === myId)) {
-        appendMessage(msg);
+      
+      // Realtime channel updates render only messages arriving from your partner.
+      if (msg.from_id === partnerId && msg.to_id === myId) {
+        appendMessageToDOM(msg, null);
       }
     })
     .subscribe();
+    
   messagesSubscription = subscription;
   fetchMessages();
 }
@@ -447,10 +469,13 @@ async function fetchMessages() {
     .select('*')
     .or(`from_id.eq.${myId},to_id.eq.${myId}`)
     .order('created_at', { ascending: true });
+    
   if (error) { messagesArea.innerHTML = "<div>Error loading messages</div>"; return; }
   messagesArea.innerHTML = "";
+  
   const { data: partnerData } = await supabase.from('users').select('photo_url').eq('user_id', partnerId).maybeSingle();
   const partnerPhoto = partnerData?.photo_url || "";
+  
   data.forEach(msg => {
     if ((msg.from_id === myId && msg.to_id === partnerId) || (msg.from_id === partnerId && msg.to_id === myId)) {
       appendMessageToDOM(msg, partnerPhoto);
@@ -458,37 +483,35 @@ async function fetchMessages() {
   });
 }
 
-function appendMessage(msg) {
-  appendMessageToDOM(msg, null);
-}
-
-async function appendMessageToDOM(msg, cachedPartnerPhoto) {
+function appendMessageToDOM(msg, cachedPartnerPhoto) {
   const isSent = msg.from_id === myId;
+  const timeString = new Date(msg.created_at).toLocaleTimeString();
+  
   const div = document.createElement("div");
   div.className = `message ${isSent ? "sent" : "received"}`;
   
-  // FIX: Use the photo URL already present in your header element instead of fetching again
   let photo = cachedPartnerPhoto || partnerAvatarHeader.src;
-  
-  // If it's a fallback placeholder SVG, don't treat it as a custom avatar URL string
   if (photo && photo.includes("data:image/svg+xml")) {
     photo = null;
   }
 
-  div.innerHTML = `<div class="message-content">${escapeHtml(msg.text)}<small>${new Date(msg.created_at).toLocaleTimeString()}</small></div>`;
+  div.innerHTML = `<div class="message-content">${escapeHtml(msg.text)}<small>${timeString}</small></div>`;
   
+  // Affix partner avatar metadata blocks safely to target frames layout
   if (!isSent && photo) {
     const avatarImg = document.createElement("img");
     avatarImg.src = photo;
     avatarImg.className = "message-avatar";
-    avatarImg.onclick = () => { previewImage.src = photo; imagePreviewModal.classList.remove("hidden"); };
+    avatarImg.onclick = () => { 
+      previewImage.src = photo; 
+      imagePreviewModal.classList.remove("hidden"); 
+    };
     div.prepend(avatarImg);
   }
   
   messagesArea.appendChild(div);
   messagesArea.scrollTop = messagesArea.scrollHeight;
 }
-
 
 // ========== SHARE ID ==========
 shareIdBtn.addEventListener("click", () => {
