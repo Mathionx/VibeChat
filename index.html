@@ -2,30 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Vibe Chat</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" href="assets/logo.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>VibeChat</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script type="importmap">
-    {
-      "imports": {
-        "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
-      }
-    }
-  </script>
-  <script type="module" src="app.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-<div id="app">
-  <!-- PIN Lock Overlay -->
-  <div id="pinOverlay" class="pin-overlay hidden">
-    <div class="pin-modal">
-      <i class="fas fa-lock"></i>
-      <h3>Enter PIN</h3>
-      <input type="password" id="pinInput" maxlength="6" placeholder="••••">
+  <!-- PIN Overlay -->
+  <div id="pinOverlay" class="hidden">
+    <div class="pin-box">
+      <h2><i class="fas fa-lock"></i> App Locked</h2>
+      <input type="password" id="pinInput" placeholder="Enter PIN" maxlength="6">
       <button id="unlockBtn">Unlock</button>
       <p id="pinError" class="error"></p>
     </div>
@@ -33,146 +20,136 @@
 
   <!-- Main App -->
   <div id="mainApp" class="hidden">
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-      <button class="nav-btn active" data-page="chats"><i class="fas fa-comments"></i><span>Chats</span></button>
-      <button class="nav-btn" data-page="profile"><i class="fas fa-user"></i><span>Profile</span></button>
-      <button class="nav-btn" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></button>
-      <button class="nav-btn" data-page="themes"><i class="fas fa-palette"></i><span>Themes</span></button>
-    </div>
-
-    <!-- Chat Page -->
+    <!-- Chats Page -->
     <div id="chatsPage" class="page active">
       <div class="chat-header">
-        <div class="partner-info" id="partnerInfo">
-          <img id="partnerAvatarHeader" class="header-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle fill='%23ccc' cx='50' cy='50' r='50'/%3E%3Ctext fill='white' x='50' y='67' text-anchor='middle' font-size='50'%3E?%3C/text%3E%3C/svg%3E">
-          <span id="chatPartnerName">Select a chat</span>
+        <div class="chat-header-info">
+          <img id="partnerAvatarHeader" src="" alt="Partner">
+          <div>
+            <span id="chatPartnerName">No partner</span>
+            <div id="chatPartnerStatus">Offline</div>
+          </div>
         </div>
-        <button id="shareIdBtn" class="icon-btn"><i class="fas fa-share-alt"></i></button>
       </div>
-      <div class="chat-container" id="chatContainer">
-        <div id="messagesArea" class="messages"></div>
-        <div class="input-area">
-          <input type="text" id="messageInput" placeholder="Type a message...">
-          <button id="sendBtn"><i class="fas fa-paper-plane"></i> Send</button>
-        </div>
+      <div id="chatContainer">
+        <div id="messagesArea"></div>
+      </div>
+      <div class="chat-input-area">
+        <input type="file" id="chatImageInput" accept="image/*" class="hidden">
+        <button id="imageUploadBtn"><i class="fas fa-image"></i></button>
+        <input type="text" id="messageInput" placeholder="Type a message...">
+        <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
       </div>
     </div>
 
     <!-- Profile Page -->
     <div id="profilePage" class="page">
-      <div class="page-header">
-        <h3>Your Profile</h3>
-      </div>
-      <div class="profile-content">
-        <div class="avatar-large" id="profileAvatar">
-          <img id="profileAvatarImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle fill='%230a84ff' cx='50' cy='50' r='50'/%3E%3Ctext fill='white' x='50' y='67' text-anchor='middle' font-size='50'%3E👤%3C/text%3E%3C/svg%3E">
+      <div class="header"><h2>Profile</h2></div>
+      <div class="content">
+        <div class="profile-card">
+          <div class="avatar-container">
+            <img id="profileAvatarImg" src="" alt="Me">
+            <div id="uploadSpinner" class="spinner hidden"><i class="fas fa-spinner fa-spin"></i></div>
+          </div>
           <button id="changePhotoBtn"><i class="fas fa-camera"></i> Change Photo</button>
-          <div id="uploadSpinner" class="spinner hidden"><i class="fas fa-spinner fa-pulse"></i> Uploading...</div>
-        </div>
-        <div class="profile-field">
-          <label>Your Name</label>
-          <input type="text" id="profileName" placeholder="Enter your name">
-        </div>
-        <div class="profile-field">
-          <label>Your Unique ID</label>
-          <div class="copy-id">
-            <span id="profileId"></span>
-            <button id="copyProfileIdBtn"><i class="fas fa-copy"></i></button>
+          <div class="form-group">
+            <label>My ID</label>
+            <div class="id-display"><span id="profileId"></span><button id="shareIdBtn"><i class="fas fa-share-alt"></i></button></div>
+          </div>
+          <div class="form-group">
+            <label>My Name</label>
+            <input type="text" id="profileName" placeholder="Your name">
           </div>
         </div>
-        <div class="profile-field">
-          <label>Partner's Name (what you call them)</label>
-          <input type="text" id="partnerNameInput" placeholder="e.g., Best Friend">
-        </div>
-        <div class="profile-field">
-          <label>Partner's ID (8 chars)</label>
-          <input type="text" id="partnerIdInput" placeholder="Enter their 8-digit code">
-          <button id="savePartnerBtn">Save Partner</button>
+        <div class="profile-card">
+          <h3>Partner Connection</h3>
+          <div class="form-group">
+            <label>Partner ID</label>
+            <input type="text" id="partnerIdInput" placeholder="8-character ID">
+          </div>
+          <div class="form-group">
+            <label>Partner Name (Optional)</label>
+            <input type="text" id="partnerNameInput" placeholder="Nickname">
+          </div>
+          <button id="savePartnerBtn">Connect Partner</button>
         </div>
       </div>
     </div>
 
     <!-- Settings Page -->
     <div id="settingsPage" class="page">
-      <div class="page-header">
-        <h3>Security & Privacy</h3>
-      </div>
-      <div class="settings-item">
-        <span>PIN Lock</span>
-        <label class="switch">
-          <input type="checkbox" id="pinToggle">
-          <span class="slider round"></span>
-        </label>
-      </div>
-      <div id="pinSettingsArea" class="hidden">
-        <div class="settings-item">
-          <input type="password" id="newPinInput" placeholder="New PIN (4-6 digits)">
-          <button id="savePinBtn">Save PIN</button>
+      <div class="header"><h2>Settings</h2></div>
+      <div class="content">
+        <div class="settings-card">
+          <div class="setting-item">
+            <span>Enable PIN Lock</span>
+            <label class="switch"><input type="checkbox" id="pinToggle"><span class="slider"></span></label>
+          </div>
+          <div id="pinSettingsArea" class="hidden">
+            <div class="form-group"><input type="password" id="oldPinInput" placeholder="Current PIN" maxlength="6"></div>
+            <div class="form-group"><input type="password" id="changeNewPinInput" placeholder="New PIN" maxlength="6"></div>
+            <button id="changePinBtn">Change PIN</button>
+          </div>
         </div>
-        <div class="settings-item" id="changePinArea">
-          <input type="password" id="oldPinInput" placeholder="Current PIN">
-          <input type="password" id="changeNewPinInput" placeholder="New PIN">
-          <button id="changePinBtn">Change PIN</button>
+        <div class="settings-card">
+          <div class="setting-item">
+            <span>Enable Notifications</span>
+            <label class="switch"><input type="checkbox" id="notificationToggle"><span class="slider"></span></label>
+          </div>
         </div>
-      </div>
-      <div class="settings-item">
-        <button id="resetAppBtn" class="danger-btn">Reset All Data</button>
+        <button id="resetAppBtn" class="danger-btn"><i class="fas fa-trash"></i> Reset All Data</button>
       </div>
     </div>
 
     <!-- Themes Page -->
     <div id="themesPage" class="page">
-      <div class="page-header">
-        <h3>Theme & Wallpaper</h3>
-      </div>
-      <div class="settings-item">
-        <span>Auto theme from wallpaper</span>
-        <label class="switch">
-          <input type="checkbox" id="autoThemeToggle">
-          <span class="slider round"></span>
-        </label>
-      </div>
-      <div class="settings-section">
-        <label>Choose Theme</label>
-        <div class="theme-grid" id="themeGrid"></div>
-      </div>
-      <div class="settings-section">
-        <label>Chat Wallpaper</label>
-        <div class="wallpaper-grid" id="wallpaperGrid"></div>
-        <button id="uploadWallpaperBtn" class="secondary-btn"><i class="fas fa-upload"></i> Upload from gallery</button>
+      <div class="header"><h2>Appearance</h2></div>
+      <div class="content">
+        <div class="settings-card">
+          <div class="setting-item">
+            <span>Auto Theme (Based on Wallpaper)</span>
+            <label class="switch"><input type="checkbox" id="autoThemeToggle"><span class="slider"></span></label>
+          </div>
+        </div>
+        <h3>Themes</h3><div id="themeGrid" class="grid"></div>
+        <h3>Wallpapers</h3><div id="wallpaperGrid" class="grid"></div>
+        <button id="uploadWallpaperBtn" style="margin-top:15px; width:100%;"><i class="fas fa-upload"></i> Custom Wallpaper</button>
       </div>
     </div>
+
+    <!-- Bottom Nav -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-page="chats"><i class="fas fa-comment"></i><span>Chats</span></button>
+      <button class="nav-btn" data-page="profile"><i class="fas fa-user"></i><span>Profile</span></button>
+      <button class="nav-btn" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></button>
+      <button class="nav-btn" data-page="themes"><i class="fas fa-palette"></i><span>Themes</span></button>
+    </nav>
   </div>
 
-  <!-- Custom Modal (toast) -->
-  <div id="customModal" class="custom-modal hidden">
-    <div class="modal-content-custom">
-      <p id="modalMessage"></p>
-      <button id="modalOkBtn">OK</button>
-    </div>
+  <!-- Modals -->
+  <div id="customModal" class="modal hidden">
+    <div class="modal-content"><p id="modalMessage"></p><button id="modalOkBtn">OK</button></div>
   </div>
-
-  <!-- QR Modal -->
-  <div id="qrModal" class="custom-modal hidden">
-    <div class="modal-content-custom">
-      <h4>Share your ID</h4>
-      <p>Your ID: <strong id="qrId"></strong></p>
+  <div id="qrModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Share Invite</h3>
       <div id="qrcode"></div>
-      <p>Or share this link:</p>
+      <p id="qrId"></p>
       <input type="text" id="shareLinkInput" readonly>
-      <button id="copyLinkBtn">Copy Link</button>
-      <button id="closeQrBtn">Close</button>
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button id="copyLinkBtn" style="flex:1;">Copy Link</button>
+        <button id="closeQrBtn" style="flex:1; background:var(--bg-surface);">Close</button>
+      </div>
+    </div>
+  </div>
+  <div id="imagePreviewModal" class="modal hidden">
+    <div class="modal-content" style="background:transparent; box-shadow:none;">
+      <img id="previewImage" src="" style="width:100%; border-radius:10px;">
+      <button id="closePreviewBtn" style="margin-top:10px; background:var(--bg-surface); color:var(--text-primary);">Close</button>
     </div>
   </div>
 
-  <!-- Image Preview Modal -->
-  <div id="imagePreviewModal" class="custom-modal hidden">
-    <div class="modal-content-custom preview-modal">
-      <img id="previewImage" src="" alt="Preview">
-      <button id="closePreviewBtn">Close</button>
-    </div>
-  </div>
-</div>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
