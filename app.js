@@ -466,12 +466,17 @@ async function appendMessageToDOM(msg, cachedPartnerPhoto) {
   const isSent = msg.from_id === myId;
   const div = document.createElement("div");
   div.className = `message ${isSent ? "sent" : "received"}`;
-  let photo = cachedPartnerPhoto;
-  if (!isSent && !photo) {
-    const { data } = await supabase.from('users').select('photo_url').eq('user_id', partnerId).maybeSingle();
-    photo = data?.photo_url || "";
+  
+  // FIX: Use the photo URL already present in your header element instead of fetching again
+  let photo = cachedPartnerPhoto || partnerAvatarHeader.src;
+  
+  // If it's a fallback placeholder SVG, don't treat it as a custom avatar URL string
+  if (photo && photo.includes("data:image/svg+xml")) {
+    photo = null;
   }
+
   div.innerHTML = `<div class="message-content">${escapeHtml(msg.text)}<small>${new Date(msg.created_at).toLocaleTimeString()}</small></div>`;
+  
   if (!isSent && photo) {
     const avatarImg = document.createElement("img");
     avatarImg.src = photo;
@@ -479,9 +484,11 @@ async function appendMessageToDOM(msg, cachedPartnerPhoto) {
     avatarImg.onclick = () => { previewImage.src = photo; imagePreviewModal.classList.remove("hidden"); };
     div.prepend(avatarImg);
   }
+  
   messagesArea.appendChild(div);
   messagesArea.scrollTop = messagesArea.scrollHeight;
 }
+
 
 // ========== SHARE ID ==========
 shareIdBtn.addEventListener("click", () => {
