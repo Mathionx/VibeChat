@@ -420,8 +420,15 @@ async function sendMessage() {
   if (!partnerId) { showMessage("Set partner ID first", true); return; }
   const text = messageInput.value.trim();
   if (!text) return;
-  await supabase.from('messages').insert([{ from_id: myId, to_id: partnerId, text, created_at: new Date() }]);
-  messageInput.value = "";
+  console.log("Sending message:", { from: myId, to: partnerId, text });
+  const { data, error } = await supabase.from('messages').insert([{ from_id: myId, to_id: partnerId, text, created_at: new Date() }]);
+  if (error) {
+    console.error("Insert error:", error);
+    showMessage("Send failed: " + error.message, true);
+  } else {
+    console.log("Insert success:", data);
+    messageInput.value = "";
+  }
 }
 
 function loadMessages() {
