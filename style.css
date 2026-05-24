@@ -203,6 +203,7 @@ body.light-theme {
   background-size: cover;
   background-position: center;
   position: relative;
+  padding-bottom: 70px; 
 }
 
 .messages {
