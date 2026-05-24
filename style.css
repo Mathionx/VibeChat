@@ -7,7 +7,7 @@
 
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
-  height: 100vh;
+  height: 100dvh;
   width: 100vw;
   overflow: hidden;
   background: var(--bg-primary);
@@ -95,7 +95,7 @@ body.light-theme {
 /* Pages */
 .page {
   display: none;
-  height: calc(100vh - 70px - env(safe-area-inset-bottom));
+  height: calc(100dvh - 70px - env(safe-area-inset-bottom));
   overflow-y: auto;
   padding-bottom: 20px;
 }
@@ -203,7 +203,6 @@ body.light-theme {
   background-size: cover;
   background-position: center;
   position: relative;
-  padding-bottom: 10%; 
 }
 
 .messages {
@@ -286,7 +285,7 @@ body.light-theme {
   background: rgba(0,0,0,0.3);
   backdrop-filter: blur(5px);
   position: absolute;
-  bottom: 70px;
+  bottom: 80px;
   left: 16px;
   border-radius: 12px;
   z-index: 5;
@@ -298,7 +297,7 @@ body.light-theme {
   color: white;
   background: var(--accent);
   position: absolute;
-  bottom: 70px;
+  bottom: 80px;
   right: 16px;
   border-radius: 12px;
   z-index: 5;
@@ -308,11 +307,12 @@ body.light-theme {
 /* Input Area */
 .input-area {
   display: flex;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  padding: 10px 12px;
   background: var(--bg-secondary);
   gap: 8px;
   border-top: 1px solid var(--border);
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .input-area input[type="text"] {
@@ -329,6 +329,10 @@ body.light-theme {
 
 .input-area input[type="text"]:focus {
   box-shadow: 0 0 0 2px var(--accent);
+}
+
+.input-area button {
+  flex-shrink: 0;
 }
 
 .input-area button#sendBtn {
@@ -740,65 +744,3 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   font-weight: 500;
 }
-
-
-/* 1. Reset everything so mobile browsers don't mess it up */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* 2. Lock the body to the dynamic height of the phone screen */
-body, html {
-  height: 100dvh; /* 'dvh' fixes the mobile browser URL bar issue! */
-  overflow: hidden; /* Prevents the whole page from bouncing/scrolling */
-  background-color: #0d1117; /* Your dark theme background */
-  font-family: sans-serif;
-}
-
-/* 3. The main wrapper is a vertical flex column */
-.app-container {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh; 
-  width: 100%;
-}
-
-/* 4. Top Header Area (Fixed size) */
-.top-header {
-  padding: 15px;
-  background-color: #161b22;
-  flex-shrink: 0; /* Prevents header from squishing */
-}
-
-/* 5. Messages Area (Expands to fill all empty space) */
-.messages-area {
-  flex: 1; /* This pushes the input and menu down to the bottom */
-  overflow-y: auto; /* Only this section scrolls */
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* 6. Message Input Area (Directly above the menu) */
-.input-area {
-  padding: 10px;
-  background-color: #161b22;
-  flex-shrink: 0;
-  display: flex;
-  gap: 10px;
-}
-
-/* 7. Bottom Navigation Menu (Fixed size at the very bottom) */
-.bottom-nav {
-  display: flex;
-  justify-content: space-around;
-  padding: 15px 0;
-  background-color: #010409;
-  flex-shrink: 0;
-  /* Adds extra padding for iPhones with the home indicator bar */
-  padding-bottom: env(safe-area-inset-bottom, 15px); 
-}
-
