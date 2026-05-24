@@ -108,8 +108,13 @@ function escapeHtml(str) {
 }
 
 function formatDate(dateString) {
-  const options = { hour: 'numeric', minute: '2-digit', hour12: true };
-  return new Date(dateString).toLocaleTimeString([], options);
+  const options = { 
+    hour: 'numeric', 
+    minute: '2-digit', 
+    hour12: true,
+    timeZone: 'Africa/Addis_Ababa' // Ensures standard EAT local time format
+  };
+  return new Date(dateString).toLocaleTimeString('en-US', options);
 }
 
 // ========== NOTIFICATIONS (SAFE API) ==========
@@ -863,17 +868,3 @@ resetAppBtn.addEventListener("click", () => {
   
   loadMessages();
 })();
-
-// Add this function to your JavaScript file
-function formatTime(supabaseTimestamp) {
-  const date = new Date(supabaseTimestamp); // Converts UTC to local device time
-  
-  // Formats it to standard hours and minutes (e.g., "11:18 PM")
-  return date.toLocaleTimeString([], { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
-}
-
-// Example of how you use it when rendering a message:
-// let displayTime = formatTime(message.created_at);
