@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 // ========== SUPABASE CONFIG ==========
 const SUPABASE_URL = "https://tmhoklmnevnnfzslsumg.supabase.co";
@@ -26,22 +26,39 @@ function simpleHash(str) { let h = 0; for(let i=0;i<str.length;i++) h = Math.imu
 // ========== USER INIT & PRESENCE ==========
 async function initUser() {
   myId = localStorage.getItem("myId");
+  
   if (!myId) {
+    // Brand new user
     myId = Math.random().toString(36).substring(2, 10);
     localStorage.setItem("myId", myId);
     await supabase.from('users').insert([{ user_id: myId, name: "", photo_url: "" }]);
+  } else {
+    // Returning user: Check if they got wiped from the database earlier
+    const { data } = await supabase.from('users').select('*').eq('user_id', myId).maybeSingle();
+    if (!data) {
+      // Re-insert into database if missing
+      await supabase.from('users').insert([{ user_id: myId, name: "", photo_url: "" }]);
+    } else {
+      myName = data.name; 
+      profileNameInput.value = myName; 
+      if (data.photo_url) profileAvatarImg.src = data.photo_url;
+    }
   }
-  const { data } = await supabase.from('users').select('*').eq('user_id', myId).maybeSingle();
-  if (data) { myName = data.name; profileNameInput.value = myName; if (data.photo_url) profileAvatarImg.src = data.photo_url; }
+  
   profileIdSpan.textContent = myId;
   
   partnerId = localStorage.getItem("partnerId") || "";
   partnerName = localStorage.getItem("partnerName") || "";
-  partnerIdInput.value = partnerId; partnerNameInput.value = partnerName;
+  partnerIdInput.value = partnerId; 
+  partnerNameInput.value = partnerName;
 
   notificationsEnabled = localStorage.getItem("notifications") === "true";
-  notificationToggle.checked = notificationsEnabled;
-  if(notificationsEnabled && Notification.permission !== 'granted') Notification.requestPermission();
+  if (notificationToggle) notificationToggle.checked = notificationsEnabled;
+  
+  // Safe Notification check for mobile browsers
+  if(notificationsEnabled && "Notification" in window && Notification.permission !== 'granted') {
+    Notification.requestPermission();
+  }
 
   await loadPartnerDetails();
   setupPresenceAndTyping();
@@ -123,7 +140,7 @@ chatImageInput.addEventListener("change", async (e) => {
   if (!file) return;
   const fileName = `${Date.now()}_${myId}.${file.name.split('.').pop()}`;
   
-  // Need a 'chat-images' bucket created in Supabase!
+  // Requires 'chat-images' bucket in Supabase!
   const { error } = await supabase.storage.from('chat-images').upload(fileName, file);
   if (error) { alert("Failed to upload image: " + error.message); return; }
   
@@ -141,7 +158,7 @@ function loadMessages() {
       const msg = payload.new;
       if (msg.from_id === partnerId && msg.to_id === myId) {
         appendMessageToDOM(msg, partnerAvatarHeader.src);
-        markAsRead([msg.id]); // Mark incoming as read immediately if chat is open
+        markAsRead([msg.id]); 
         triggerNotification(msg);
       }
     })
@@ -210,7 +227,7 @@ function appendMessageToDOM(msg, photo) {
 
 // ========== NOTIFICATIONS ==========
 function triggerNotification(msg) {
-  if (document.hidden && notificationsEnabled && Notification.permission === "granted") {
+  if (document.hidden && notificationsEnabled && "Notification" in window && Notification.permission === "granted") {
     new Notification(chatPartnerNameSpan.textContent, {
       body: msg.text || "📷 Sent an image",
       icon: partnerAvatarHeader.src
@@ -218,13 +235,15 @@ function triggerNotification(msg) {
   }
 }
 
-notificationToggle.addEventListener("change", (e) => {
-  notificationsEnabled = e.target.checked;
-  localStorage.setItem("notifications", notificationsEnabled);
-  if (notificationsEnabled) Notification.requestPermission();
-});
+if(notificationToggle){
+  notificationToggle.addEventListener("change", (e) => {
+    notificationsEnabled = e.target.checked;
+    localStorage.setItem("notifications", notificationsEnabled);
+    if (notificationsEnabled && "Notification" in window) Notification.requestPermission();
+  });
+}
 
-// ========== BASIC UI BINDINGS (Abbreviated for space) ==========
+// ========== BASIC UI BINDINGS ==========
 navBtns.forEach(btn => {
   btn.addEventListener("click", () => {
     navBtns.forEach(b => b.classList.remove("active")); btn.classList.add("active");
