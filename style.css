@@ -439,7 +439,7 @@ body.light-theme {
 
 /* Settings */
 .settings-section {
-  padding: 16px;
+  padding: 16px 16px 70px 16px;
 }
 .settings-section label {
   display: block;
