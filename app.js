@@ -863,3 +863,17 @@ resetAppBtn.addEventListener("click", () => {
   
   loadMessages();
 })();
+
+// Add this function to your JavaScript file
+function formatTime(supabaseTimestamp) {
+  const date = new Date(supabaseTimestamp); // Converts UTC to local device time
+  
+  // Formats it to standard hours and minutes (e.g., "11:18 PM")
+  return date.toLocaleTimeString([], { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+}
+
+// Example of how you use it when rendering a message:
+// let displayTime = formatTime(message.created_at);
